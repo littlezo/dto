@@ -1,0 +1,79 @@
+{
+    "name": "littler/dto",
+    "description": "littler hyperf dto",
+    "license": "MIT",
+    "keywords": [
+        "dto",
+        "swoole",
+        "hyperf",
+        "littler",
+        "littler dto"
+    ],
+    "homepage": "https://github.com/littlezo/littler",
+    "support": {
+        "docs": "https://github.com/littlezo/littler/wiki",
+        "issues": "https://github.com/littlezo/littler/issues",
+        "pull-request": "https://github.com/littlezo/littler/pulls",
+        "source": "https://github.com/littlezo/littler"
+    },
+    "authors": [
+        {
+            "name": "littlezov",
+            "email": "littlezov@qq.com",
+            "homepage": "https://github.com/littlezo",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": "^8.1||^8.2",
+        "littler/framework": "1.0.x",
+        "netresearch/jsonmapper": "~4.0.0",
+        "hyperf/validation": "~3.0.0",
+        "phpdocumentor/reflection-docblock": "^5.0"
+    },
+    "require-dev": {
+        "mockery/mockery": "^1.0",
+        "phpstan/phpstan": "^0.12",
+        "phpunit/phpunit": ">=7.0",
+        "symfony/var-dumper": "^5.1"
+    },
+    "autoload": {
+        "psr-4": {
+            "Littler\\DTO\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "HyperfTest\\DTO\\": "tests/"
+        }
+    },
+    "extra": {
+        "hyperf": {
+            "config": "Littler\\DTO\\ConfigProvider"
+        },
+        "branch-alias": {
+            "dev-main": "1.0.x-dev"
+        }
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "sort-packages": true
+    },
+    "scripts": {
+        "fixer": "php-cs-fixer fix src && php-cs-fixer fix tests",
+        "test": "phpunit -c phpunit.xml --colors=always",
+        "analyse": "phpstan analyse --memory-limit 1024M -l 0 ./src"
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "repositories": {
+        "littler": {
+            "type": "path",
+            "url": "../../../littler/src/*"
+        },
+        "hyperf": {
+            "type": "path",
+            "url": "../../../hyperf/src/*"
+        }
+    }
+}

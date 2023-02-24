@@ -26,10 +26,8 @@ class ApiAnnotation
      * @param $className
      * @param $propertyName
      * @param $annotationClassName
-     *
-     * @return object|null $annotationClassName
      */
-    public static function getProperty($className, $propertyName, $annotationClassName): ?object
+    public static function getProperty(string $className, string $propertyName, $annotationClassName): ?object
     {
         $propertyAnnotations = AnnotationCollector::getClassPropertyAnnotation($className, $propertyName);
 
@@ -40,7 +38,7 @@ class ApiAnnotation
      * @param $className
      * @param $propertyName
      */
-    public static function getClassProperty($className, $propertyName): array
+    public static function getClassProperty(string $className, string $propertyName): array
     {
         return AnnotationCollector::getClassPropertyAnnotation($className, $propertyName) ?? [];
     }

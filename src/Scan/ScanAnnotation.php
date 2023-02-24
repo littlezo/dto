@@ -30,7 +30,6 @@ use Littler\DTO\ApiAnnotation;
 use Littler\DTO\Exception\DtoException;
 use Littler\DTO\JsonMapper;
 use Psr\Container\ContainerInterface;
-use ReflectionException;
 use ReflectionProperty;
 use Throwable;
 
@@ -38,14 +37,14 @@ class ScanAnnotation extends JsonMapper
 {
     private static array $scanClassArray = [];
 
-    public function __construct(private ContainerInterface $container, private MethodDefinitionCollectorInterface $methodDefinitionCollector)
-    {
+    public function __construct(
+        private ContainerInterface $container,
+        private MethodDefinitionCollectorInterface $methodDefinitionCollector
+    ) {
     }
 
     /**
      * 扫描控制器中的方法.
-     *
-     * @throws ReflectionException
      */
     public function scan(string $className, string $methodName): void
     {
@@ -95,7 +94,7 @@ class ScanAnnotation extends JsonMapper
                 $annotations = $this->parseAnnotationsNew($rc, $reflectionProperty, $docblock);
                 if (! empty($annotations)) {
                     // support "@var type description"
-                    [$varType] = explode(' ', $annotations['var'][0]);
+                    [$varType] = explode(' ', (string) $annotations['var'][0]);
                     $varType = $this->getFullNamespace($varType, $strNs);
                     // 数组类型
                     if ($this->isArrayOfType($varType)) {
@@ -180,7 +179,9 @@ class ScanAnnotation extends JsonMapper
         if (! empty($ruleArray)) {
             ValidationManager::setRule($className, $fieldName, $ruleArray);
             foreach ($annotationArray as $annotation) {
-                if (class_exists(ModelProperty::class) && $annotation instanceof ModelProperty && ! empty($annotation->value)) {
+                if (class_exists(
+                    ModelProperty::class
+                ) && $annotation instanceof ModelProperty && ! empty($annotation->value)) {
                     ValidationManager::setAttributes($className, $fieldName, $annotation->value);
                 }
             }
@@ -193,7 +194,8 @@ class ScanAnnotation extends JsonMapper
     protected function getTypeName(ReflectionProperty $rp): string
     {
         try {
-            $type = $rp->getType()->getName();
+            $type = $rp->getType()
+                ->getName();
         } catch (Throwable) {
             $type = 'string';
         }
@@ -203,13 +205,8 @@ class ScanAnnotation extends JsonMapper
 
     /**
      * 设置方法中的参数.
-     *
-     * @param mixed $className
-     * @param mixed $methodName
-     *
-     * @throws ReflectionException
      */
-    private function setMethodParameters($className, $methodName): void
+    private function setMethodParameters(mixed $className, mixed $methodName): void
     {
         // 获取方法的反射对象
         $ref = ReflectionManager::reflectMethod($className, $methodName);
@@ -248,17 +245,23 @@ class ScanAnnotation extends JsonMapper
                 $methodParameters->setIsValid(true);
             }
             if ($mark > 1) {
-                throw new DtoException("Parameter annotation [RequestQuery RequestFormData RequestBody] cannot exist simultaneously [{$className}::{$methodName}:{$paramName}]");
+                throw new DtoException(
+                    "Parameter annotation [RequestQuery RequestFormData RequestBody] cannot exist simultaneously [{$className}::{$methodName}:{$paramName}]"
+                );
             }
             if ($headerMark > 1) {
-                throw new DtoException("Parameter annotation [RequestHeader] can only exist [{$className}::{$methodName}:{$paramName}]");
+                throw new DtoException(
+                    "Parameter annotation [RequestHeader] can only exist [{$className}::{$methodName}:{$paramName}]"
+                );
             }
             if ($total > 0) {
                 MethodParametersManager::setContent($className, $methodName, $paramName, $methodParameters);
             }
         }
         if ($methodMark > 1) {
-            throw new DtoException("Method annotation [RequestFormData RequestBody] cannot exist simultaneously [{$className}::{$methodName}]");
+            throw new DtoException(
+                "Method annotation [RequestFormData RequestBody] cannot exist simultaneously [{$className}::{$methodName}]"
+            );
         }
     }
 }

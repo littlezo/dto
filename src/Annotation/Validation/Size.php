@@ -29,9 +29,6 @@ class Size extends BaseValidation
      */
     protected mixed $rule = 'size';
 
-    /**
-     * Size constructor.
-     */
     public function __construct(int $value, string $messages = '')
     {
         $this->messages = $messages;

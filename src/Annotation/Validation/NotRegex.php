@@ -26,9 +26,6 @@ class NotRegex extends BaseValidation
      */
     protected mixed $rule = 'not_regex';
 
-    /**
-     * Regex constructor.
-     */
     public function __construct(string $value, string $messages = '')
     {
         $this->messages = $messages;

@@ -25,9 +25,6 @@ use Hyperf\Validation\Rule;
 #[Attribute(Attribute::TARGET_PROPERTY)]
 class NotIn extends BaseValidation
 {
-    /**
-     * In constructor.
-     */
     public function __construct(array $value, string $messages = '')
     {
         $this->messages = $messages;

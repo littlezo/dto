@@ -29,7 +29,7 @@ class PropertyManager
 
     public static function setNotSimpleClass($className): void
     {
-        $className = trim($className, '\\');
+        $className = trim((string) $className, '\\');
         static::$notSimpleClass[$className] = true;
     }
 
@@ -50,12 +50,10 @@ class PropertyManager
      *
      * @param $className
      * @param $fieldName
-     *
-     * @return Property|null
      */
     public static function getProperty($className, $fieldName): ?Property
     {
-        $className = trim($className, '\\');
+        $className = trim((string) $className, '\\');
         if (! isset(static::$content[$className][$fieldName])) {
             return null;
         }
@@ -65,7 +63,7 @@ class PropertyManager
 
     public static function getPropertyByType($className, $type, bool $isSimpleType): array
     {
-        $className = trim($className, '\\');
+        $className = trim((string) $className, '\\');
         if (! isset(static::$content[$className])) {
             return [];
         }
@@ -91,7 +89,7 @@ class PropertyManager
      */
     public static function getPropertyAndNotSimpleType($className): array
     {
-        $className = trim($className, '\\');
+        $className = trim((string) $className, '\\');
         if (! isset(static::$notSimpleClass[$className])) {
             return [];
         }

@@ -20,16 +20,11 @@ use Hyperf\Di\Annotation\AbstractAnnotation;
 
 abstract class BaseValidation extends AbstractAnnotation
 {
-    public string $messages = '';
-
     protected mixed $rule;
 
-    /**
-     * BaseValidation constructor.
-     */
-    public function __construct(string $messages = '')
-    {
-        $this->messages = $messages;
+    public function __construct(
+        public string $messages = ''
+    ) {
     }
 
     public function getRule(): mixed

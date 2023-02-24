@@ -21,16 +21,12 @@ use Hyperf\RpcServer\Router\RouteCollector as RpcRouteCollector;
 
 class AfterDtoStart
 {
-    public array $serverConfig;
-
     /**
-     * @var RouteCollector|RpcRouteCollector
+     * @param RouteCollector|RpcRouteCollector $router
      */
-    public mixed $router;
-
-    public function __construct(array $serverConfig, $router)
-    {
-        $this->router = $router;
-        $this->serverConfig = $serverConfig;
+    public function __construct(
+        public array $serverConfig,
+        public $router
+    ) {
     }
 }

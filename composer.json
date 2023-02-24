@@ -70,10 +70,6 @@
         "littler": {
             "type": "path",
             "url": "../../../littler/src/*"
-        },
-        "hyperf": {
-            "type": "path",
-            "url": "../../../hyperf/src/*"
         }
     }
 }

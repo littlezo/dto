@@ -23,7 +23,8 @@ use OpenApi\Generator;
 #[Attribute(Attribute::TARGET_CLASS)]
 class ModelSchema extends AbstractAnnotation
 {
-    public function __construct(public string $value = Generator::UNDEFINED)
-    {
+    public function __construct(
+        public string $value = Generator::UNDEFINED
+    ) {
     }
 }

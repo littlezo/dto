@@ -41,8 +41,10 @@ class ScanAnnotationTest extends TestCase
     public function testScan(): void
     {
         $container = m::mock(ContainerInterface::class);
-        $container->shouldReceive('has')->andReturn(true);
-        $container->shouldReceive('get')->with(MethodDefinitionCollectorInterface::class)->andReturn(new MethodDefinitionCollector());
+        $container->shouldReceive('has')
+            ->andReturn(true);
+        $container->shouldReceive('get')
+            ->with(MethodDefinitionCollectorInterface::class)->andReturn(new MethodDefinitionCollector());
 
         $scanAnnotation = new ScanAnnotation($container, $container->get(MethodDefinitionCollectorInterface::class));
 
@@ -63,7 +65,7 @@ class ScanAnnotationTest extends TestCase
 
         $property = PropertyManager::getProperty(DemoBodyRequest::class, 'arrClass');
         $this->assertSame('array', $property->phpSimpleType);
-        $this->assertSame(Address::class, trim($property->arrClassName, '\\'));
+        $this->assertSame(Address::class, trim((string) $property->arrClassName, '\\'));
         $this->assertFalse($property->isSimpleType);
         $this->assertNull($property->arrSimpleType);
 
@@ -76,7 +78,7 @@ class ScanAnnotationTest extends TestCase
 
         $property = PropertyManager::getProperty(Address::class, 'user');
         $this->assertNull($property->phpSimpleType);
-        $this->assertSame(User::class, trim($property->className, '\\'));
+        $this->assertSame(User::class, trim((string) $property->className, '\\'));
         $this->assertFalse($property->isSimpleType);
 
         // return

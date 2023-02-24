@@ -16,62 +16,128 @@ declare(strict_types=1);
 
 namespace Littler\DTO\Middleware;
 
+use FastRoute\Dispatcher;
 use Hyperf\Context\Context;
 use Hyperf\Contract\Arrayable;
 use Hyperf\Contract\Jsonable;
-use Hyperf\HttpMessage\Stream\SwooleStream;
-use Hyperf\Utils\Codec\Json;
+use Hyperf\HttpServer\CoreMiddleware as HttpCoreMiddleware;
+use Hyperf\HttpServer\Router\Dispatched;
+use Hyperf\Server\Exception\ServerException;
 use InvalidArgumentException;
+use Littler\Annotation\Definition;
 use Littler\DTO\Mapper;
 use Littler\DTO\Scan\MethodParametersManager;
 use Littler\DTO\Scan\PropertyAliasMappingManager;
 use Littler\DTO\ValidationDto;
-use Psr\Container\ContainerExceptionInterface;
-use Psr\Container\NotFoundExceptionInterface;
+use Littler\Enum\BaseEnum;
+use Littler\Response\BaseResponse;
+use Littler\Response\ErrorResponse;
+use Littler\Response\Response;
+use Littler\Response\StreamResponse;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 
-class CoreMiddleware extends \Hyperf\HttpServer\CoreMiddleware
+#[Definition(values: [HttpCoreMiddleware::class])]
+class CoreMiddleware extends HttpCoreMiddleware
 {
-    protected function parseMethodParameters(string $controller, string $action, array $arguments): array
+    public function dispatch(ServerRequestInterface $request): ServerRequestInterface
     {
-        $definitions = $this->getMethodDefinitionCollector()->getParameters($controller, $action);
+        return parent::dispatch($request);
+    }
 
-        return $this->getInjections($definitions, "{$controller}::{$action}", $arguments);
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
+    {
+        $request = Context::set(ServerRequestInterface::class, $request);
+
+        $dispatched = $request->getAttribute(Dispatched::class);
+        assert($dispatched instanceof Dispatched);
+
+        if (! $dispatched instanceof Dispatched) {
+            throw new ServerException(sprintf('调度对象不是[%s]对象', Dispatched::class));
+        }
+        $response = match ($dispatched->status) {
+            Dispatcher::NOT_FOUND => $this->handleNotFound($request),
+            Dispatcher::METHOD_NOT_ALLOWED => $this->handleMethodNotAllowed($dispatched->params, $request),
+            Dispatcher::FOUND => $this->handleFound($dispatched, $request),
+            default => null,
+        };
+
+        if (! $response instanceof ResponseInterface) {
+            $response = $this->transferToResponse($response, $request);
+        }
+
+        return $response;
+    }
+
+    protected function handleNotFound(ServerRequestInterface $request): ResponseInterface
+    {
+        $response = new ErrorResponse();
+        $response->code = BaseEnum::NOT_FOUND;
+        $response->message = '非法请求';
+        $response->withStatus(404);
+
+        return $this->transferToResponse($response, $request);
+    }
+
+    protected function handleMethodNotAllowed(array $methods, ServerRequestInterface $request): ResponseInterface
+    {
+        $response = new ErrorResponse();
+        $response->code = BaseEnum::METHOD_NOT_ALLOW;
+        $response->message = t('little.allow_method', [
+            'method' => implode(',', $methods),
+        ]);
+        $response->withStatus(405);
+
+        return $this->transferToResponse($response, $request);
     }
 
     /**
      * Transfer the non-standard response content to a standard response object.
      *
-     * @param array|Arrayable|Jsonable|string|null $response
+     * @param Response|array|Arrayable|Jsonable|string|null $response
      */
     protected function transferToResponse($response, ServerRequestInterface $request): ResponseInterface
     {
-        if (is_string($response)) {
-            return $this->response()->withAddedHeader('content-type', 'text/plain')->withBody(new SwooleStream($response));
+        switch ($response) {
+            case $response instanceof Response:
+                $response = $response->send();
+
+                break;
+            case is_array($response):
+            case $response instanceof Arrayable:
+            case $response instanceof Jsonable:
+                $response = new BaseResponse($response);
+                $response = $response->send();
+
+                break;
+            case is_object($response):
+                $response = new BaseResponse((array) $response);
+                $response = $response->send();
+
+                break;
+            default:
+                $response = new StreamResponse();
+                $response->data = (string) $response;
+                $response = $response->send();
+
+                break;
         }
 
-        if (is_array($response) || $response instanceof Arrayable) {
-            return $this->response()
-                ->withAddedHeader('content-type', 'application/json')
-                ->withBody(new SwooleStream(Json::encode($response)));
-        }
-
-        if ($response instanceof Jsonable) {
-            return $this->response()
-                ->withAddedHeader('content-type', 'application/json')
-                ->withBody(new SwooleStream((string) $response));
-        }
-        // object
-        if (is_object($response)) {
-            return $this->response()
-                ->withAddedHeader('content-type', 'application/json')
-                ->withBody(new SwooleStream(Json::encode($response)));
-        }
-
-        return $this->response()->withAddedHeader('content-type', 'text/plain')->withBody(new SwooleStream((string) $response));
+        return $response;
     }
 
+    protected function parseMethodParameters(string $controller, string $action, array $arguments): array
+    {
+        $definitions = $this->getMethodDefinitionCollector()
+            ->getParameters($controller, $action);
+
+        return $this->getInjections($definitions, "{$controller}::{$action}", $arguments);
+    }
+
+    /**
+     * @param ReflectionType[] $definitions
+     */
     private function getInjections(array $definitions, string $callableName, array $arguments): array
     {
         $injections = [];
@@ -80,13 +146,22 @@ class CoreMiddleware extends \Hyperf\HttpServer\CoreMiddleware
             if ($value === null) {
                 if ($definition->getMeta('defaultValueAvailable')) {
                     $injections[] = $definition->getMeta('defaultValue');
-                } elseif ($definition->allowsNull()) {
-                    $injections[] = null;
                 } elseif ($this->container->has($definition->getName())) {
                     $obj = $this->container->get($definition->getName());
-                    $injections[] = $this->validateAndMap($callableName, $definition->getMeta('name'), $definition->getName(), $obj);
+                    $injections[] = $this->validateAndMap(
+                        $callableName,
+                        $definition->getMeta('name'),
+                        $definition->getName(),
+                        $obj
+                    );
+                } elseif ($definition->allowsNull()) {
+                    $injections[] = null;
                 } else {
-                    throw new InvalidArgumentException("Parameter '{$definition->getMeta('name')}' of {$callableName} should not be null");
+                    throw new InvalidArgumentException(sprintf(
+                        '参数%s（属于%s）不应为空',
+                        $definition->getMeta('name'),
+                        $callableName
+                    ));
                 }
             } else {
                 $injections[] = $this->getNormalizer()->denormalize($value, $definition->getName());
@@ -98,12 +173,8 @@ class CoreMiddleware extends \Hyperf\HttpServer\CoreMiddleware
 
     /**
      * @param string $callableName 'App\Controller\DemoController::index'
-     * @param mixed $obj
-     *
-     * @throws ContainerExceptionInterface
-     * @throws NotFoundExceptionInterface
      */
-    private function validateAndMap(string $callableName, string $paramName, string $className, $obj): mixed
+    private function validateAndMap(string $callableName, string $paramName, string $className, mixed $obj): mixed
     {
         [$controllerName, $methodName] = explode('::', $callableName);
         $methodParameter = MethodParametersManager::getMethodParameter($controllerName, $methodName, $paramName);
@@ -118,11 +189,19 @@ class CoreMiddleware extends \Hyperf\HttpServer\CoreMiddleware
             $param = $request->getParsedBody();
         } elseif ($methodParameter->isRequestQuery()) {
             $param = $request->getQueryParams();
+            $route = $request->getAttribute(Dispatched::class);
+            if ($route) {
+                $param = array_replace($param, (array) $route->params);
+            }
         } elseif ($methodParameter->isRequestFormData()) {
             $param = $request->getParsedBody();
         } elseif ($methodParameter->isRequestHeader()) {
-            $param = array_map(fn ($value) => $value[0], $request->getHeaders());
+            $param = array_map(fn ($value): string => $value[0], $request->getHeaders());
         }
+        if (empty($param)) {
+            $param = [];
+        }
+        dump($param);
         // validate
         if ($methodParameter->isValid()) {
             $validationDTO->validate($className, $param);

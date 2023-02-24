@@ -45,10 +45,14 @@ class JsonMapper extends \JsonMapper
     public function mapDto($json, $object): mixed
     {
         if ($this->bEnforceMapType && ! is_object($json)) {
-            throw new InvalidArgumentException('JsonMapper::map() requires first argument to be an object, ' . gettype($json) . ' given.');
+            throw new InvalidArgumentException('JsonMapper::map() requires first argument to be an object, ' . gettype(
+                $json
+            ) . ' given.');
         }
         if (! is_object($object)) {
-            throw new InvalidArgumentException('JsonMapper::map() requires second argument to be an object, ' . gettype($object) . ' given.');
+            throw new InvalidArgumentException('JsonMapper::map() requires second argument to be an object, ' . gettype(
+                $object
+            ) . ' given.');
         }
 
         $strClassName = $object::class;
@@ -73,7 +77,9 @@ class JsonMapper extends \JsonMapper
 
             if (! $hasProperty) {
                 if ($this->bExceptionOnUndefinedProperty) {
-                    throw new JsonMapper_Exception('JSON property "' . $key . '" does not exist in object of type ' . $strClassName);
+                    throw new JsonMapper_Exception(
+                        'JSON property "' . $key . '" does not exist in object of type ' . $strClassName
+                    );
                 }
                 if ($this->undefinedPropertyHandler !== null) {
                     ($this->undefinedPropertyHandler)(
@@ -85,7 +91,10 @@ class JsonMapper extends \JsonMapper
                     $this->log(
                         'info',
                         'Property {property} does not exist in {class}',
-                        ['property' => $key, 'class' => $strClassName]
+                        [
+                            'property' => $key,
+                            'class' => $strClassName,
+                        ]
                     );
                 }
 
@@ -94,12 +103,17 @@ class JsonMapper extends \JsonMapper
 
             if ($accessor === null) {
                 if ($this->bExceptionOnUndefinedProperty) {
-                    throw new JsonMapper_Exception('JSON property "' . $key . '" has no public setter method in object of type ' . $strClassName);
+                    throw new JsonMapper_Exception(
+                        'JSON property "' . $key . '" has no public setter method in object of type ' . $strClassName
+                    );
                 }
                 $this->log(
                     'info',
                     'Property {property} has no public setter method in {class}',
-                    ['property' => $key, 'class' => $strClassName]
+                    [
+                        'property' => $key,
+                        'class' => $strClassName,
+                    ]
                 );
 
                 continue;
@@ -113,7 +127,9 @@ class JsonMapper extends \JsonMapper
                 }
                 $type = $this->removeNullable($type);
             } elseif ($jvalue === null) {
-                throw new JsonMapper_Exception('JSON property "' . $key . '" in class "' . $strClassName . '" must not be NULL');
+                throw new JsonMapper_Exception(
+                    'JSON property "' . $key . '" in class "' . $strClassName . '" must not be NULL'
+                );
             }
 
             $type = $this->getFullNamespace($type, $strNs);
@@ -132,7 +148,9 @@ class JsonMapper extends \JsonMapper
             }
             if ($this->isSimpleType($type)) {
                 if ($type === 'string' && is_object($jvalue)) {
-                    throw new JsonMapper_Exception('JSON property "' . $key . '" in class "' . $strClassName . '" is an object and cannot be converted to a string');
+                    throw new JsonMapper_Exception(
+                        'JSON property "' . $key . '" in class "' . $strClassName . '" is an object and cannot be converted to a string'
+                    );
                 }
                 settype($jvalue, $type);
                 $this->setProperty($object, $accessor, $jvalue);
@@ -151,7 +169,7 @@ class JsonMapper extends \JsonMapper
                 // array
                 $array = [];
                 $subtype = substr($type, 0, -2);
-            } elseif (substr($type, -1) == ']') {
+            } elseif (str_ends_with($type, ']')) {
                 [$proptype, $subtype] = explode('[', substr($type, 0, -1));
                 if ($proptype == 'array') {
                     $array = [];
@@ -166,7 +184,9 @@ class JsonMapper extends \JsonMapper
 
             if ($array !== null) {
                 if (! is_array($jvalue) && $this->isFlatType(gettype($jvalue))) {
-                    throw new JsonMapper_Exception('JSON property "' . $key . '" must be an array, ' . gettype($jvalue) . ' given');
+                    throw new JsonMapper_Exception('JSON property "' . $key . '" must be an array, ' . gettype(
+                        $jvalue
+                    ) . ' given');
                 }
 
                 $cleanSubtype = $this->removeNullable($subtype);
@@ -176,7 +196,9 @@ class JsonMapper extends \JsonMapper
                 // use constructor parameter if we have a class
                 // but only a flat type (i.e. string, int)
                 if ($this->bStrictObjectTypeChecking) {
-                    throw new JsonMapper_Exception('JSON property "' . $key . '" must be an object, ' . gettype($jvalue) . ' given');
+                    throw new JsonMapper_Exception('JSON property "' . $key . '" must be an object, ' . gettype(
+                        $jvalue
+                    ) . ' given');
                 }
                 $child = $this->createInstance($type, true, $jvalue);
             } else {
@@ -197,9 +219,7 @@ class JsonMapper extends \JsonMapper
         if ($this->postMappingMethod !== null
             && $rc->hasMethod($this->postMappingMethod)
         ) {
-            $refDeserializePostMethod = $rc->getMethod(
-                $this->postMappingMethod
-            );
+            $refDeserializePostMethod = $rc->getMethod($this->postMappingMethod);
             $refDeserializePostMethod->setAccessible(true);
             $refDeserializePostMethod->invoke($object);
         }
@@ -222,6 +242,7 @@ class JsonMapper extends \JsonMapper
      */
     protected function inspectProperty(ReflectionClass $rc, $name): array
     {
+        $typeName = null;
         // try setter method first
         $setter = 'set' . $this->getCamelCaseName($name);
 
@@ -245,11 +266,7 @@ class JsonMapper extends \JsonMapper
                         // allow overriding an "array" type hint
                         // with a more specific class in the docblock
                         if ($typeName !== 'array') {
-                            return [
-                                true, $rmeth,
-                                $typeName,
-                                $isNullable,
-                            ];
+                            return [true, $rmeth, $typeName, $isNullable];
                         }
                     }
                 }
@@ -260,7 +277,7 @@ class JsonMapper extends \JsonMapper
                 if (! isset($annotations['param'][0])) {
                     return [true, $rmeth, null, $isNullable];
                 }
-                [$type] = explode(' ', trim($annotations['param'][0]));
+                [$type] = explode(' ', trim((string) $annotations['param'][0]));
 
                 return [true, $rmeth, $type, $this->isNullable($type)];
             }
@@ -300,27 +317,17 @@ class JsonMapper extends \JsonMapper
                         $propTypeName = $rPropType->getName();
 
                         if ($this->isSimpleType($propTypeName)) {
-                            return [
-                                true,
-                                $rprop,
-                                $propTypeName,
-                                $rPropType->allowsNull(),
-                            ];
+                            return [true, $rprop, $propTypeName, $rPropType->allowsNull()];
                         }
 
-                        return [
-                            true,
-                            $rprop,
-                            '\\' . $propTypeName,
-                            $rPropType->allowsNull(),
-                        ];
+                        return [true, $rprop, '\\' . $propTypeName, $rPropType->allowsNull()];
                     }
 
                     return [true, $rprop, null, false];
                 }
 
                 // support "@var type description"
-                [$type] = explode(' ', $annotations['var'][0]);
+                [$type] = explode(' ', (string) $annotations['var'][0]);
 
                 return [true, $rprop, $type, $this->isNullable($type)];
             }
@@ -341,12 +348,15 @@ class JsonMapper extends \JsonMapper
      *               Key is the "@"-name like "param",
      *               each value is an array of the rest of the @-lines
      */
-    protected function parseAnnotationsNew(ReflectionClass $rc, ReflectionProperty $reflectionProperty, $docblock): array
-    {
+    protected function parseAnnotationsNew(
+        ReflectionClass $rc,
+        ReflectionProperty $reflectionProperty,
+        false|string $docblock
+    ): array {
         $annotations = [];
         /** @var ReflectionAttribute $arrayType */
         $arrayType = $reflectionProperty->getAttributes(ArrayType::class)[0] ?? [];
-        if (! empty($arrayType)) {
+        if ($arrayType instanceof ReflectionAttribute) {
             $type = $arrayType->getArguments()[0] ?? null;
             if (! empty($type)) {
                 $isSimpleType = $this->isSimpleType($type);
@@ -375,11 +385,8 @@ class JsonMapper extends \JsonMapper
         return $annotations;
     }
 
-    protected function createInstance(
-        $class,
-        $useParameter = false,
-        $jvalue = null
-    ) {
+    protected function createInstance($class, $useParameter = false, $jvalue = null)
+    {
         if ($useParameter) {
             // @phpstan-ignore-next-line
             if (PHP_VERSION_ID >= 80100 && is_subclass_of($class, BackedEnum::class)) {
@@ -415,7 +422,7 @@ class JsonMapper extends \JsonMapper
      *
      * @return mixed Mapped $array is returned
      */
-    protected function mapDtoArray($json, $array, $class = null, $parent_key = ''): mixed
+    protected function mapDtoArray($json, mixed $array, $class = null, $parent_key = ''): mixed
     {
         $originalClass = $class;
         foreach ($json as $key => $jvalue) {
@@ -423,11 +430,7 @@ class JsonMapper extends \JsonMapper
             if ($class === null) {
                 $array[$key] = $jvalue;
             } elseif ($this->isArrayOfType($class)) {
-                $array[$key] = $this->mapDtoArray(
-                    $jvalue,
-                    [],
-                    substr($class, 0, -2)
-                );
+                $array[$key] = $this->mapDtoArray($jvalue, [], substr($class, 0, -2));
             } elseif ($this->isFlatType(gettype($jvalue))) {
                 // use constructor parameter if we have a class
                 // but only a flat type (i.e. string, int)
@@ -438,32 +441,26 @@ class JsonMapper extends \JsonMapper
                         settype($jvalue, $class);
                         $array[$key] = $jvalue;
                     } else {
-                        $array[$key] = $this->createInstance(
-                            $class,
-                            true,
-                            $jvalue
-                        );
+                        $array[$key] = $this->createInstance($class, true, $jvalue);
                     }
                 }
             } elseif ($this->isFlatType($class)) {
-                throw new JsonMapper_Exception('JSON property "' . ($parent_key ?: '?') . '" is an array of type "' . $class . '" but contained a value of type "' . gettype($jvalue) . '"');
+                throw new JsonMapper_Exception(
+                    'JSON property "' . ($parent_key ?: '?') . '" is an array of type "' . $class . '" but contained a value of type "' . gettype(
+                        $jvalue
+                    ) . '"'
+                );
             } elseif (is_a($class, 'ArrayObject', true)) {
-                $array[$key] = $this->mapDtoArray(
-                    $jvalue,
-                    $this->createInstance($class)
-                );
+                $array[$key] = $this->mapDtoArray($jvalue, $this->createInstance($class));
             } else {
-                $array[$key] = $this->map(
-                    $jvalue,
-                    $this->createInstance($class, false, $jvalue)
-                );
+                $array[$key] = $this->map($jvalue, $this->createInstance($class, false, $jvalue));
             }
         }
 
         return $array;
     }
 
-    protected function aliasMapping($strClassName, $key)
+    protected function aliasMapping(string $strClassName, $key)
     {
         $isAliasMappingClassname = PropertyAliasMappingManager::isAliasMappingClassname($strClassName);
         if (! $isAliasMappingClassname) {

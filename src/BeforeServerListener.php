@@ -35,10 +35,7 @@ class BeforeServerListener implements ListenerInterface
 {
     public function listen(): array
     {
-        return [
-            BeforeServerStart::class,
-            MainCoroutineServerStart::class,
-        ];
+        return [BeforeServerStart::class, MainCoroutineServerStart::class];
     }
 
     public function process(object $event): void
@@ -55,8 +52,13 @@ class BeforeServerListener implements ListenerInterface
         $eventDispatcher = $container->get(EventDispatcherInterface::class);
         $scanAnnotation = $container->get(ScanAnnotation::class);
 
-        $serverConfig = collect($config->get('server.servers'))->where('name', $serverName)->first();
-        if (isset($serverConfig['callbacks']['receive'][0]) && Str::contains($serverConfig['callbacks']['receive'][0], 'TcpServer')) {
+        $serverConfig = collect($config->get('server.servers'))
+            ->where('name', $serverName)
+            ->first();
+        if (isset($serverConfig['callbacks']['receive'][0]) && Str::contains(
+            $serverConfig['callbacks']['receive'][0],
+            'TcpServer'
+        )) {
             $tcpRouter = $container->get(TcpRouter::class);
             $router = $tcpRouter->getRouter($serverName);
         } else {

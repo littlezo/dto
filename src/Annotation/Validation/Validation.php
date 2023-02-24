@@ -21,9 +21,6 @@ use Attribute;
 #[Attribute(Attribute::TARGET_PROPERTY)]
 class Validation extends BaseValidation
 {
-    /**
-     * Validation constructor.
-     */
     public function __construct(mixed $rule, string $messages = '')
     {
         $this->rule = $rule;

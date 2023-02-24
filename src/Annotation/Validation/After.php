@@ -29,9 +29,6 @@ class After extends BaseValidation
      */
     protected mixed $rule = 'after';
 
-    /**
-     * After constructor.
-     */
     public function __construct(string $date, string $messages = '')
     {
         $this->messages = $messages;

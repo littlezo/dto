@@ -26,9 +26,6 @@ class Max extends BaseValidation
      */
     protected mixed $rule = 'max';
 
-    /**
-     * Max constructor.
-     */
     public function __construct(int $value, string $messages = '')
     {
         $this->messages = $messages;

@@ -35,7 +35,8 @@ class TcpRouter
     public function getRouter($serverName)
     {
         $data = make(DispatcherFactory::class, [
-            'pathGenerator' => $this->getProtocol()->getPathGenerator(),
+            'pathGenerator' => $this->getProtocol()
+                ->getPathGenerator(),
         ]);
 
         return $data->getRouter($serverName);

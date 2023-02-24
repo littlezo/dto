@@ -16,28 +16,22 @@ declare(strict_types=1);
 
 namespace Littler\DTO;
 
-use Hyperf\HttpServer\CoreMiddleware;
-
 class ConfigProvider
 {
+    /**
+     * @return array{dependencies: never[], listeners: array<class-string<BeforeServerListener>>, annotations: array{scan: array{paths: string[]}}, publish: never[]}
+     */
     public function __invoke(): array
     {
         return [
-            'dependencies' => [
-                CoreMiddleware::class => Middleware\CoreMiddleware::class,
-            ],
-            'listeners' => [
-                BeforeServerListener::class,
-            ],
+            'dependencies' => [],
+            'listeners' => [BeforeServerListener::class],
             'annotations' => [
                 'scan' => [
-                    'paths' => [
-                        __DIR__,
-                    ],
+                    'paths' => [__DIR__],
                 ],
             ],
-            'publish' => [
-            ],
+            'publish' => [],
         ];
     }
 }

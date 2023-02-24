@@ -29,9 +29,6 @@ class StartsWith extends BaseValidation
      */
     protected mixed $rule = 'starts_with';
 
-    /**
-     * Max constructor.
-     */
     public function __construct(string $value, string $messages = '')
     {
         $this->messages = $messages;

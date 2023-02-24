@@ -22,10 +22,8 @@ use Hyperf\Di\Annotation\AbstractAnnotation;
 #[Attribute(Attribute::TARGET_PROPERTY)]
 class JSONField extends AbstractAnnotation
 {
-    public string $name;
-
-    public function __construct(string $name)
-    {
-        $this->name = $name;
+    public function __construct(
+        public string $name
+    ) {
     }
 }

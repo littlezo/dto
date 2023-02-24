@@ -20,8 +20,12 @@ class MethodParametersManager
 {
     public static array $content = [];
 
-    public static function setContent(string $className, string $methodName, string $paramName, MethodParameter $method): void
-    {
+    public static function setContent(
+        string $className,
+        string $methodName,
+        string $paramName,
+        MethodParameter $method
+    ): void {
         $className = trim($className, '\\');
         if (isset(static::$content[$className . $methodName . $paramName])) {
             return;
@@ -29,8 +33,11 @@ class MethodParametersManager
         static::$content[$className . $methodName . $paramName] = $method;
     }
 
-    public static function getMethodParameter(string $className, string $methodName, string $paramName): ?MethodParameter
-    {
+    public static function getMethodParameter(
+        string $className,
+        string $methodName,
+        string $paramName
+    ): ?MethodParameter {
         $className = trim($className, '\\');
         if (! isset(static::$content[$className . $methodName . $paramName])) {
             return null;

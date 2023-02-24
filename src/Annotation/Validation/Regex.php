@@ -26,9 +26,6 @@ class Regex extends BaseValidation
      */
     protected mixed $rule = 'regex';
 
-    /**
-     * Regex constructor.
-     */
     public function __construct(string $value, string $messages = '')
     {
         $this->messages = $messages;

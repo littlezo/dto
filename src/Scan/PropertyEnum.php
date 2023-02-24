@@ -18,6 +18,7 @@ namespace Littler\DTO\Scan;
 
 use BackedEnum;
 use ReflectionEnum;
+use ReflectionException;
 
 class PropertyEnum
 {
@@ -48,7 +49,7 @@ class PropertyEnum
             /** @phpstan-ignore-next-line */
             $rEnum = new ReflectionEnum($className);
             $propertyEnum->backedType = (string) $rEnum->getBackingType();
-        } catch (\ReflectionException) {
+        } catch (ReflectionException) {
             $propertyEnum->backedType = 'string';
         }
         $propertyEnum->className = trim($className, '\\');

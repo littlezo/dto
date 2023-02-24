@@ -26,9 +26,6 @@ class Between extends BaseValidation
      */
     protected mixed $rule = 'between';
 
-    /**
-     * Between constructor.
-     */
     public function __construct(int $min, int $max, string $messages = '')
     {
         $this->rule = $this->rule . ':' . $min . ',' . $max;

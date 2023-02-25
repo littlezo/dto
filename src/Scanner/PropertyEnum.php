@@ -14,7 +14,7 @@ declare(strict_types=1);
  *
  */
 
-namespace Littler\DTO\Scan;
+namespace Littler\DTO\Scanner;
 
 use BackedEnum;
 use ReflectionEnum;

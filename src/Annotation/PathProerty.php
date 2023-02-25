@@ -14,17 +14,17 @@ declare(strict_types=1);
  *
  */
 
-namespace Littler\DTO;
+namespace Littler\DTO\Annotation;
 
-use Littler\ConfigRegister;
+use Attribute;
+use Littler\Constant\PropertyScope;
 
-class ConfigProvider
+#[Attribute(Attribute::TARGET_PROPERTY)]
+class PathProerty extends Property
 {
-    /**
-     * @return array{dependencies: never[], listeners: array<class-string<BeforeServerListener>>, annotations: array{scan: array{paths: string[]}}, publish: never[]}
-     */
-    public function __invoke(): array
+    public function __construct(string $name, $example = null, bool $hidden = false)
     {
-        return ConfigRegister::register(__DIR__);
+        parent::__construct($name, $example, $hidden);
+        $this->scope = PropertyScope::ROUTE();
     }
 }

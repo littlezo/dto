@@ -14,7 +14,7 @@ declare(strict_types=1);
  *
  */
 
-namespace Littler\DTO\Scan;
+namespace Littler\DTO\Scanner;
 
 class MethodParametersManager
 {
@@ -27,10 +27,10 @@ class MethodParametersManager
         MethodParameter $method
     ): void {
         $className = trim($className, '\\');
-        if (isset(static::$content[$className . $methodName . $paramName])) {
+        if (isset(static::$content[$className][$methodName][$paramName])) {
             return;
         }
-        static::$content[$className . $methodName . $paramName] = $method;
+        static::$content[$className][$methodName][$paramName] = $method;
     }
 
     public static function getMethodParameter(
@@ -39,10 +39,10 @@ class MethodParametersManager
         string $paramName
     ): ?MethodParameter {
         $className = trim($className, '\\');
-        if (! isset(static::$content[$className . $methodName . $paramName])) {
+        if (! isset(static::$content[$className][$methodName][$paramName])) {
             return null;
         }
 
-        return static::$content[$className . $methodName . $paramName];
+        return static::$content[$className][$methodName][$paramName];
     }
 }

@@ -20,8 +20,8 @@ use Hyperf\Utils\ApplicationContext;
 use Hyperf\Validation\Contract\ValidatorFactoryInterface;
 use Hyperf\Validation\ValidationException;
 use Littler\DTO\Exception\DtoException;
-use Littler\DTO\Scan\PropertyManager;
-use Littler\DTO\Scan\ValidationManager;
+use Littler\DTO\Scanner\PropertyManager;
+use Littler\DTO\Scanner\ValidationManager;
 
 class ValidationDto
 {

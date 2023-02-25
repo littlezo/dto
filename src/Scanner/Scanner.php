@@ -14,11 +14,14 @@ declare(strict_types=1);
  *
  */
 
-namespace Littler\DTO\Scan;
+namespace Littler\DTO\Scanner;
 
 use Hyperf\Di\MethodDefinitionCollectorInterface;
 use Hyperf\Di\ReflectionManager;
-use Littler\DTO\Annotation\JSONField;
+use Littler\Abstract\BaseEnum;
+use Littler\Constant\PropertyScope;
+use Littler\DTO\Annotation\ArrayType;
+use Littler\DTO\Annotation as DTOA;
 use Littler\DTO\Annotation\ModelProperty;
 use Littler\DTO\Annotation\RequestBody;
 use Littler\DTO\Annotation\RequestFormData;
@@ -28,12 +31,12 @@ use Littler\DTO\Annotation\Validation;
 use Littler\DTO\Annotation\Validation\BaseValidation;
 use Littler\DTO\ApiAnnotation;
 use Littler\DTO\Exception\DtoException;
-use Littler\DTO\JsonMapper;
 use Psr\Container\ContainerInterface;
+use ReflectionAttribute;
 use ReflectionProperty;
 use Throwable;
 
-class ScanAnnotation extends JsonMapper
+class Scanner
 {
     private static array $scanClassArray = [];
 
@@ -41,6 +44,11 @@ class ScanAnnotation extends JsonMapper
         private ContainerInterface $container,
         private MethodDefinitionCollectorInterface $methodDefinitionCollector
     ) {
+    }
+
+    public function clearScanClassArray(): void
+    {
+        self::$scanClassArray = [];
     }
 
     /**
@@ -59,11 +67,6 @@ class ScanAnnotation extends JsonMapper
         }
     }
 
-    public function clearScanClassArray(): void
-    {
-        self::$scanClassArray = [];
-    }
-
     /**
      * 扫描类.
      */
@@ -73,80 +76,63 @@ class ScanAnnotation extends JsonMapper
             return;
         }
         self::$scanClassArray[] = $className;
-        $rc = ReflectionManager::reflectClass($className);
-        $strNs = $rc->getNamespaceName();
-        foreach ($rc->getProperties() ?? [] as $reflectionProperty) {
+        $reflectionClass = ReflectionManager::reflectClass($className);
+        foreach ($reflectionClass->getProperties() ?? [] as $reflectionProperty) {
+            $type = $reflectionProperty->getType();
             $fieldName = $reflectionProperty->getName();
             $isSimpleType = true;
-            $phpSimpleType = null;
-            $propertyClassName = null;
-            $arrSimpleType = null;
-            $arrClassName = null;
-            $type = $this->getTypeName($reflectionProperty);
-            // php简单类型
-            if ($this->isSimpleType($type)) {
-                $phpSimpleType = $type;
-            }
-            // 数组类型
-            $propertyEnum = PropertyEnum::get($type);
-            if ($type == 'array') {
-                $docblock = $reflectionProperty->getDocComment();
-                $annotations = $this->parseAnnotationsNew($rc, $reflectionProperty, $docblock);
-                if (! empty($annotations)) {
-                    // support "@var type description"
-                    [$varType] = explode(' ', (string) $annotations['var'][0]);
-                    $varType = $this->getFullNamespace($varType, $strNs);
-                    // 数组类型
-                    if ($this->isArrayOfType($varType)) {
-                        $isSimpleType = false;
-                        $arrType = substr($varType, 0, -2);
-                        // 数组的简单类型 eg: int[]  string[]
-                        if ($this->isSimpleType($arrType)) {
-                            $arrSimpleType = $arrType;
-                        } elseif (class_exists($arrType)) {
-                            $arrClassName = $arrType;
-                            PropertyManager::setNotSimpleClass($className);
-                            $this->scanClass($arrType);
+
+            $propertyClass = $type->getName();
+            if ($type->isBuiltin()) {    // 内建类型
+                if ($propertyClass == 'array') { // 数组类型特殊处理
+                    $attributes = $reflectionProperty->getAttributes(ArrayType::class);
+                    if (! empty($attributes)) {
+                        $propertyClass = $attributes[0]->newInstance()->value;
+                        if (class_exists($propertyClass)) {
+                            $isSimpleType = false;
+                            $this->scanClass($propertyClass);
                         }
                     }
                 }
-            } elseif ($propertyEnum) {
-                $isSimpleType = false;
-                PropertyManager::setNotSimpleClass($className);
-            } elseif (class_exists($type)) {
-                $this->scanClass($type);
-                $isSimpleType = false;
-                $propertyClassName = $type;
-                PropertyManager::setNotSimpleClass($className);
+            } else {
+                if (! is_subclass_of($propertyClass, BaseEnum::class)) {
+                    $this->scanClass($propertyClass);
+                    $isSimpleType = false;
+                }
             }
-
-            $property = new Property();
-            $property->phpSimpleType = $phpSimpleType;
+            $property = new ScanProperty();
+            $property->type = $type->getName();
             $property->isSimpleType = $isSimpleType;
-            $property->arrSimpleType = $arrSimpleType;
-            $property->arrClassName = $arrClassName ? trim($arrClassName, '\\') : null;
-            $property->className = $propertyClassName ? trim($propertyClassName, '\\') : null;
-            $property->enum = $propertyEnum;
+            $property->className = $propertyClass ? trim((string) $propertyClass, '\\') : null;
+            $property->scope = $this->getPropertyScope($reflectionProperty);
             PropertyManager::setProperty($className, $fieldName, $property);
             $this->generateValidation($className, $fieldName);
-            $this->propertyAliasMappingManager($className, $fieldName);
         }
     }
 
-    /**
-     * 生成验证数据.
-     */
-    protected function propertyAliasMappingManager(string $className, string $fieldName): void
+    protected function getPropertyScope(ReflectionProperty $reflectionProperty): PropertyScope
     {
-        $annotationArray = ApiAnnotation::getClassProperty($className, $fieldName);
-
-        foreach ($annotationArray as $annotation) {
-            if ($annotation instanceof JSONField) {
-                if (! empty($annotation->name)) {
-                    PropertyAliasMappingManager::setAliasMapping($className, $annotation->name, $fieldName);
-                }
-            }
+        $annotation = $reflectionProperty->getAttributes(DTOA\Property::class)[0] ?? null;
+        if (! $annotation instanceof ReflectionAttribute) {
+            $annotation = $reflectionProperty->getAttributes(DTOA\Attribute::class)[0] ?? null;
         }
+        if (! $annotation instanceof ReflectionAttribute) {
+            $annotation = $reflectionProperty->getAttributes(DTOA\Header::class)[0] ?? null;
+        }
+        if (! $annotation instanceof ReflectionAttribute) {
+            $annotation = $reflectionProperty->getAttributes(DTOA\PathProerty::class)[0] ?? null;
+        }
+        if (! $annotation instanceof ReflectionAttribute) {
+            $annotation = $reflectionProperty->getAttributes(DTOA\FileProerty::class)[0] ?? null;
+        }
+        if (! $annotation instanceof ReflectionAttribute) {
+            return PropertyScope::BODY();
+        }
+
+        /** @var DTOA\Property $property */
+        $property = $annotation->newInstance();
+
+        return $property->scope;
     }
 
     /**
@@ -201,6 +187,15 @@ class ScanAnnotation extends JsonMapper
         }
 
         return $type;
+    }
+
+    protected function isSimpleType($type): bool
+    {
+        return $type == 'string'
+            || $type == 'boolean' || $type == 'bool'
+            || $type == 'integer' || $type == 'int'
+            || $type == 'double' || $type == 'float'
+            || $type == 'array' || $type == 'object';
     }
 
     /**

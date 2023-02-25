@@ -14,17 +14,26 @@ declare(strict_types=1);
  *
  */
 
-namespace Littler\DTO;
+namespace Littler\DTO\Scanner;
 
-use Littler\ConfigRegister;
+use Littler\Constant\PropertyScope;
 
-class ConfigProvider
+class ScanProperty
 {
     /**
-     * @return array{dependencies: never[], listeners: array<class-string<BeforeServerListener>>, annotations: array{scan: array{paths: string[]}}, publish: never[]}
+     * 是否为简单类型.
      */
-    public function __invoke(): array
-    {
-        return ConfigRegister::register(__DIR__);
-    }
+    public bool $isSimpleType = true;
+
+    /**
+     * PHP简单类型.
+     */
+    public string $type;
+
+    /**
+     * 普通类名称.
+     */
+    public ?string $className = null;
+
+    public PropertyScope $scope;
 }

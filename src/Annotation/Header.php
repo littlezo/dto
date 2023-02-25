@@ -14,17 +14,29 @@ declare(strict_types=1);
  *
  */
 
-namespace Littler\DTO;
+namespace Littler\DTO\Annotation;
 
-use Littler\ConfigRegister;
+use Attribute;
+use Hyperf\Di\Annotation\AbstractMultipleAnnotation;
 
-class ConfigProvider
+#[Attribute(Attribute::TARGET_CLASS | Attribute::TARGET_METHOD | Attribute::IS_REPEATABLE)]
+class Header extends AbstractMultipleAnnotation
 {
-    /**
-     * @return array{dependencies: never[], listeners: array<class-string<BeforeServerListener>>, annotations: array{scan: array{paths: string[]}}, publish: never[]}
-     */
-    public function __invoke(): array
+    protected string $in = 'header';
+
+    public function __construct(
+        public string $name = '',
+        public ?bool $required = null,
+        public string $type = 'string',
+        public $default = null,
+        public $example = null,
+        public ?string $description = null,
+        public bool $hidden = false
+    ) {
+    }
+
+    public function getIn(): string
     {
-        return ConfigRegister::register(__DIR__);
+        return $this->in;
     }
 }

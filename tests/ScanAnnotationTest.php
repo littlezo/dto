@@ -20,7 +20,7 @@ use Hyperf\Di\Annotation\AnnotationCollector;
 use Hyperf\Di\MethodDefinitionCollector;
 use Hyperf\Di\MethodDefinitionCollectorInterface;
 use Hyperf\DTO\Scan\PropertyManager;
-use Hyperf\DTO\Scan\ScanAnnotation;
+use Hyperf\DTO\Scan\Scanner;
 use Hyperf\Utils\Reflection\ClassInvoker;
 use HyperfTest\DTO\Controller\DemoController;
 use HyperfTest\DTO\Request\Address;
@@ -46,9 +46,9 @@ class ScanAnnotationTest extends TestCase
         $container->shouldReceive('get')
             ->with(MethodDefinitionCollectorInterface::class)->andReturn(new MethodDefinitionCollector());
 
-        $scanAnnotation = new ScanAnnotation($container, $container->get(MethodDefinitionCollectorInterface::class));
+        $scanAnnotation = new Scanner($container, $container->get(MethodDefinitionCollectorInterface::class));
 
-        /** @var ScanAnnotation $scanAnnotation */
+        /** @var Scanner $scanAnnotation */
         $scanAnnotation = new ClassInvoker($scanAnnotation);
 
         $scanAnnotation->scan(DemoController::class, 'add');

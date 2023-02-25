@@ -14,7 +14,7 @@ declare(strict_types=1);
  *
  */
 
-namespace Littler\DTO\Scan;
+namespace Littler\DTO\Scanner;
 
 class PropertyManager
 {
@@ -36,7 +36,7 @@ class PropertyManager
     /**
      * 设置类中字段的属性.
      */
-    public static function setProperty(string $className, string $fieldName, Property $property): void
+    public static function setProperty(string $className, string $fieldName, ScanProperty $property): void
     {
         $className = trim($className, '\\');
         if (isset(static::$content[$className][$fieldName])) {
@@ -51,9 +51,13 @@ class PropertyManager
      * @param $className
      * @param $fieldName
      */
-    public static function getProperty($className, $fieldName): ?Property
+    public static function getProperty(string $className, ?string $fieldName = null): ScanProperty|array|null
     {
-        $className = trim((string) $className, '\\');
+        $className = trim($className, '\\');
+        if (empty($fieldName)) {
+            return static::$content[$className] ?? [];
+        }
+
         if (! isset(static::$content[$className][$fieldName])) {
             return null;
         }
@@ -69,9 +73,10 @@ class PropertyManager
         }
         $data = [];
         foreach (static::$content[$className] as $fieldName => $propertyArr) {
-            /** @var Property $property */
+            /** @var ScanProperty $property */
             foreach ($propertyArr as $property) {
-                if ($property->phpSimpleType == $type
+                if (
+                    $property->type == $type
                     && $property->isSimpleType == $isSimpleType
                 ) {
                     $data[$fieldName] = $property;
@@ -85,7 +90,7 @@ class PropertyManager
     /**
      * @param $className
      *
-     * @return Property[]
+     * @return ScanProperty[]
      */
     public static function getPropertyAndNotSimpleType($className): array
     {
@@ -94,8 +99,8 @@ class PropertyManager
             return [];
         }
         $data = [];
-        foreach (static::$content[$className] ?? [] as $fieldName => $property) {
-            if (! $property->isSimpleType) {
+        foreach (static::$content[$className] as $fieldName => $property) {
+            if ($property->isSimpleType == false) {
                 $data[$fieldName] = $property;
             }
         }

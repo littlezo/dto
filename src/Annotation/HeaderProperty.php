@@ -18,7 +18,6 @@ namespace Littler\DTO\Annotation;
 
 use Attribute;
 use Littler\Constant\PropertyScope;
-use Littler\DTO\Annotation\Property;
 
 #[Attribute(Attribute::TARGET_PROPERTY)]
 class HeaderProperty extends Property

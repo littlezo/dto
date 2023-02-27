@@ -120,10 +120,10 @@ class Scanner
             $annotation = $reflectionProperty->getAttributes(DTOA\Header::class)[0] ?? null;
         }
         if (! $annotation instanceof ReflectionAttribute) {
-            $annotation = $reflectionProperty->getAttributes(DTOA\PathProerty::class)[0] ?? null;
+            $annotation = $reflectionProperty->getAttributes(DTOA\PathProperty::class)[0] ?? null;
         }
         if (! $annotation instanceof ReflectionAttribute) {
-            $annotation = $reflectionProperty->getAttributes(DTOA\FileProerty::class)[0] ?? null;
+            $annotation = $reflectionProperty->getAttributes(DTOA\FileProperty::class)[0] ?? null;
         }
         if (! $annotation instanceof ReflectionAttribute) {
             return PropertyScope::BODY();

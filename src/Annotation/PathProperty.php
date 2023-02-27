@@ -20,11 +20,11 @@ use Attribute;
 use Littler\Constant\PropertyScope;
 
 #[Attribute(Attribute::TARGET_PROPERTY)]
-class FileProerty extends Property
+class PathProperty extends Property
 {
     public function __construct(string $name, $example = null, bool $hidden = false)
     {
         parent::__construct($name, $example, $hidden);
-        $this->scope = PropertyScope::UPLOAD();
+        $this->scope = PropertyScope::ROUTE();
     }
 }

@@ -20,8 +20,8 @@ use Hyperf\Di\MethodDefinitionCollectorInterface;
 use Hyperf\Di\ReflectionManager;
 use Littler\Abstract\BaseEnum;
 use Littler\Constant\PropertyScope;
-use Littler\DTO\Annotation\ArrayType;
 use Littler\DTO\Annotation as DTOA;
+use Littler\DTO\Annotation\ArrayType;
 use Littler\DTO\Annotation\ModelProperty;
 use Littler\DTO\Annotation\RequestBody;
 use Littler\DTO\Annotation\RequestFormData;
@@ -124,6 +124,9 @@ class Scanner
         }
         if (! $annotation instanceof ReflectionAttribute) {
             $annotation = $reflectionProperty->getAttributes(DTOA\FileProperty::class)[0] ?? null;
+        }
+        if (!$annotation instanceof ReflectionAttribute) {
+            $annotation = $reflectionProperty->getAttributes(DTOA\HeaderProperty::class)[0] ?? null;
         }
         if (! $annotation instanceof ReflectionAttribute) {
             return PropertyScope::BODY();

@@ -20,8 +20,8 @@ use Hyperf\Di\MethodDefinitionCollectorInterface;
 use Hyperf\Di\ReflectionManager;
 use Littler\Abstract\BaseEnum;
 use Littler\Constant\PropertyScope;
-use Littler\DTO\Annotation\ArrayType;
 use Littler\DTO\Annotation as DTOA;
+use Littler\DTO\Annotation\ArrayType;
 use Littler\DTO\Annotation\ModelProperty;
 use Littler\DTO\Annotation\RequestBody;
 use Littler\DTO\Annotation\RequestFormData;
@@ -216,6 +216,7 @@ class Scanner
         foreach ($attributes as $attribute) {
             $methodParameters = new MethodParameter();
             $paramName = $attribute->getName();
+            $methodMark = 0;
             $mark = 0;
             if ($attribute->getAttributes(RequestQuery::class)) {
                 $methodParameters->setIsRequestQuery(true);

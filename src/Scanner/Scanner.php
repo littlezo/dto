@@ -22,15 +22,20 @@ use Littler\Abstract\BaseEnum;
 use Littler\Constant\PropertyScope;
 use Littler\DTO\Annotation\ArrayType;
 use Littler\DTO\Annotation as DTOA;
+use Littler\DTO\Annotation\HeaderProperty;
 use Littler\DTO\Annotation\ModelProperty;
+use Littler\DTO\Annotation\PathProperty;
+use Littler\DTO\Annotation\Property;
 use Littler\DTO\Annotation\RequestBody;
 use Littler\DTO\Annotation\RequestFormData;
 use Littler\DTO\Annotation\RequestHeader;
 use Littler\DTO\Annotation\RequestQuery;
+use Littler\DTO\Annotation\Security;
 use Littler\DTO\Annotation\Validation;
 use Littler\DTO\Annotation\Validation\BaseValidation;
 use Littler\DTO\ApiAnnotation;
 use Littler\DTO\Exception\DtoException;
+use Littler\Utils\Str;
 use Psr\Container\ContainerInterface;
 use ReflectionAttribute;
 use ReflectionProperty;
@@ -39,6 +44,8 @@ use Throwable;
 class Scanner
 {
     private static array $scanClassArray = [];
+
+    private static array $typeScriptType = [];
 
     public function __construct(
         private ContainerInterface $container,
@@ -65,6 +72,7 @@ class Scanner
                 $this->scanClass($parameterClassName);
             }
         }
+        // dump(self::$typeScriptType);
     }
 
     /**
@@ -79,10 +87,14 @@ class Scanner
         $reflectionClass = ReflectionManager::reflectClass($className);
         foreach ($reflectionClass->getProperties() ?? [] as $reflectionProperty) {
             $type = $reflectionProperty->getType();
+            if ($type == null) {
+                continue;
+            }
+            $shortName = $reflectionClass->getShortName();
             $fieldName = $reflectionProperty->getName();
             $isSimpleType = true;
-
             $propertyClass = $type->getName();
+            $enumValue = [];
             if ($type->isBuiltin()) {    // 内建类型
                 if ($propertyClass == 'array') { // 数组类型特殊处理
                     $attributes = $reflectionProperty->getAttributes(ArrayType::class);
@@ -98,16 +110,69 @@ class Scanner
                 if (! is_subclass_of($propertyClass, BaseEnum::class)) {
                     $this->scanClass($propertyClass);
                     $isSimpleType = false;
+                } else {
+                    $enumValue = $propertyClass::getValues();
                 }
             }
+
             $property = new ScanProperty();
             $property->type = $type->getName();
             $property->isSimpleType = $isSimpleType;
             $property->className = $propertyClass ? trim((string) $propertyClass, '\\') : null;
             $property->scope = $this->getPropertyScope($reflectionProperty);
+
+            $propertyAttributes = $reflectionProperty->getAttributes(Security::class);
+            $pos = 'security';
+            if (! $propertyAttributes && ! in_array($fieldName, ['casts', 'items']) && ! Str::endsWith(
+                $shortName,
+                'Response'
+            )) {
+                $propertyClassName = null;
+                if (! $isSimpleType && class_exists($propertyClass)) {
+                    $propertyClassName = ReflectionManager::reflectClass($propertyClass)->getShortName();
+                }
+                if (! $propertyAttributes) {
+                    $propertyAttributes = $reflectionProperty->getAttributes(Property::class);
+                    $pos = 'body';
+                }
+                if (! $propertyAttributes) {
+                    $propertyAttributes = $reflectionProperty->getAttributes(PathProperty::class);
+                    $pos = 'path';
+                }
+                if (! $propertyAttributes) {
+                    $propertyAttributes = $reflectionProperty->getAttributes(HeaderProperty::class);
+                    $pos = 'header';
+                }
+                if (! $propertyAttributes) {
+                    $pos = null;
+                }
+                $typeClassName = $type->getName();
+                if (! $isSimpleType && class_exists($typeClassName)) {
+                    $typeClassName = ReflectionManager::reflectClass($typeClassName)->getShortName();
+                }
+                self::$typeScriptType[$shortName][$fieldName] = [
+                    'type' => $typeClassName,
+                    'isSimpleType' => $isSimpleType,
+                    'className' => $propertyClassName,
+                    'enumValue' => $enumValue,
+                    'allowsNull' => $type->allowsNull(),
+                    'pos' => $pos,
+                    'commit' => $pos ? $propertyAttributes[0]->newInstance()->name : $pos,
+                ];
+            }
             PropertyManager::setProperty($className, $fieldName, $property);
             $this->generateValidation($className, $fieldName);
         }
+    }
+
+    public static function getTypeScriptType(): array
+    {
+        return self::$typeScriptType;
+    }
+
+    public static function clearTypeScriptType(): void
+    {
+        self::$typeScriptType = [];
     }
 
     protected function getPropertyScope(ReflectionProperty $reflectionProperty): PropertyScope

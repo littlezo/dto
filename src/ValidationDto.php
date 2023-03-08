@@ -52,7 +52,7 @@ class ValidationDto
         }
 
         $validArr = ValidationManager::getData($className);
-        dump($validArr);
+        // dump($validArr);
         if (empty($validArr)) {
             return;
         }

@@ -21,7 +21,7 @@ use Hyperf\Di\MethodDefinitionCollector;
 use Hyperf\Di\MethodDefinitionCollectorInterface;
 use Hyperf\DTO\Scan\PropertyManager;
 use Hyperf\DTO\Scan\Scanner;
-use Hyperf\Utils\Reflection\ClassInvoker;
+use Hyperf\Support\Reflection\ClassInvoker;
 use HyperfTest\DTO\Controller\DemoController;
 use HyperfTest\DTO\Request\Address;
 use HyperfTest\DTO\Request\DemoBodyRequest;

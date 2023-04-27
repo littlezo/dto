@@ -16,7 +16,7 @@ declare(strict_types=1);
 
 namespace Littler\DTO;
 
-use Hyperf\Utils\ApplicationContext;
+use Hyperf\Context\ApplicationContext;
 use Hyperf\Validation\Contract\ValidatorFactoryInterface;
 use Hyperf\Validation\ValidationException;
 use Littler\DTO\Exception\DtoException;

@@ -17,6 +17,7 @@ declare(strict_types=1);
 namespace Littler\DTO\Listener;
 
 use Closure;
+use Hyperf\Context\ApplicationContext;
 use Hyperf\Contract\ConfigInterface;
 use Hyperf\Event\Annotation\Listener;
 use Hyperf\Event\Contract\ListenerInterface;
@@ -24,14 +25,15 @@ use Hyperf\Framework\Event\BeforeServerStart;
 use Hyperf\HttpServer\Router\DispatcherFactory;
 use Hyperf\HttpServer\Router\Handler;
 use Hyperf\Server\Event\MainCoroutineServerStart;
-use Hyperf\Utils\ApplicationContext;
-use Hyperf\Utils\Str;
+use Hyperf\Stringable\Str;
 use Littler\DTO\Event\AfterDtoStart;
 use Littler\DTO\Router\TcpRouter;
 use Littler\DTO\Scanner\Scanner;
 use Psr\EventDispatcher\EventDispatcherInterface;
 use RuntimeException;
 use Throwable;
+
+use function Hyperf\Collection\collect;
 
 #[Listener]
 class BeforeServerListener implements ListenerInterface

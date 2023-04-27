@@ -21,6 +21,8 @@ use Hyperf\Rpc\Protocol;
 use Hyperf\RpcServer\Router\DispatcherFactory;
 use Psr\Container\ContainerInterface;
 
+use function Hyperf\Support\make;
+
 class TcpRouter
 {
     private TcpServer $tcpServer;

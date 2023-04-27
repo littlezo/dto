@@ -20,6 +20,8 @@ use BackedEnum;
 use ReflectionEnum;
 use ReflectionException;
 
+use function Hyperf\Collection\collect;
+
 class PropertyEnum
 {
     /**

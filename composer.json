@@ -27,12 +27,12 @@
     "require": {
         "php": "^8.1||^8.2",
         "littler/framework": "~1.0",
-        "netresearch/jsonmapper": "~4.0",
-        "hyperf/validation": "~3.0",
-        "phpdocumentor/reflection-docblock": "^5.0"
+        "netresearch/jsonmapper": "^4.2",
+        "hyperf/validation": "^3.0.24",
+        "phpdocumentor/reflection-docblock": "^5.3"
     },
     "require-dev": {
-        "mockery/mockery": "^1.0",
+        "mockery/mockery": "^1.6.2",
         "phpstan/phpstan": "*",
         "phpunit/phpunit": "*",
         "symfony/var-dumper": "*"
